@@ -5,8 +5,8 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 
-# 絶対パスを指定して .env ファイルを読み込む
-env_path = Path('C:/Users/waday/Step4/POS/backend/.env')
+# .env ファイルを読み込む
+env_path = Path('C:/Users/waday/Step4/POS_new/backend/.env')
 load_dotenv(dotenv_path=env_path)
 
 DATABASE_URL = os.getenv("DATABASE_URL")
