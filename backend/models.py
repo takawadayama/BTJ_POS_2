@@ -31,6 +31,7 @@ class TransactionDetail(Base):
     product_code = Column(String(13))
     product_name = Column(String(50))
     product_price = Column(Integer)
+    quantity = Column(Integer)
 
     transaction = relationship("Transaction", back_populates="details")
     product = relationship("Product")

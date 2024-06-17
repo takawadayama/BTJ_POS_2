@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from . import crud, models, schemas
 from .database import engine, get_db
+from typing import List
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -31,6 +32,12 @@ def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)
     if db_product:
         raise HTTPException(status_code=400, detail="Product already registered")
     return crud.create_product(db=db, product=product)
+
+# GETメソッドをサポートするエンドポイントの追加
+@app.get("/products/", response_model=List[schemas.Product])
+def read_products(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+    products = crud.get_products(db, skip=skip, limit=limit)
+    return products
 
 @app.post("/transactions/", response_model=schemas.Transaction)
 def create_transaction(transaction: schemas.TransactionCreate, db: Session = Depends(get_db)):
