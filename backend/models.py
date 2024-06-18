@@ -16,8 +16,8 @@ class Transaction(Base):
     id = Column(Integer, primary_key=True, index=True)
     datetime = Column(DateTime)
     emp_code = Column(String(10))
-    store_code = Column(String(5))
-    pos_no = Column(String(3))
+    store_code = Column(String(10))
+    pos_no = Column(String(10))
     total_amt = Column(Integer)
     
     details = relationship("TransactionDetail", back_populates="transaction")

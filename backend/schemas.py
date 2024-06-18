@@ -19,6 +19,7 @@ class TransactionDetailBase(BaseModel):
     product_code: str
     product_name: str
     product_price: int
+    quantity: int
 
 class TransactionDetailCreate(TransactionDetailBase):
     pass
