@@ -3,33 +3,28 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
-from pathlib import Path
 
-import logging
-logging.basicConfig()
-logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
-
-# .env ファイルを読み込む
-env_path = Path('C:/Users/waday/Step4/POS_new/backend/.env')
+# Load environment variables from .env file
+env_path = 'C:/Users/waday/Step4/POS_new/backend/.env'
 load_dotenv(dotenv_path=env_path)
-
 DATABASE_URL = os.getenv("DATABASE_URL")
-SSL_CA = os.getenv("SSL_CA")
+ssl_ca = os.getenv("SSL_CA")
 
-print(f"DATABASE_URL: {DATABASE_URL}")  # デバッグ用
-print(f"SSL_CA: {SSL_CA}")  # デバッグ用
+if DATABASE_URL is None or ssl_ca is None:
+    raise ValueError("DATABASE_URL and SSL_CA must be set")
 
 engine = create_engine(
     DATABASE_URL,
     connect_args={
         "ssl": {
-            "ca": SSL_CA
+            "ca": ssl_ca
         }
     }
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
+# データベースセッションの依存関係
 def get_db():
     db = SessionLocal()
     try:

@@ -19,15 +19,14 @@ class Transaction(Base):
     store_code = Column(String(10))
     pos_no = Column(String(10))
     total_amt = Column(Integer)
-    
     details = relationship("TransactionDetail", back_populates="transaction")
 
 class TransactionDetail(Base):
     __tablename__ = "transaction_details"
 
     id = Column(Integer, primary_key=True, index=True)
-    transaction_id = Column(Integer, ForeignKey("transactions.id"))
-    product_id = Column(Integer, ForeignKey("products.id"))
+    transaction_id = Column(Integer, ForeignKey('transactions.id'))
+    product_id = Column(Integer, ForeignKey('products.id'))
     product_code = Column(String(13))
     product_name = Column(String(50))
     product_price = Column(Integer)
