@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
+from datetime import datetime
 
 def get_product_by_code(db: Session, code: str):
     return db.query(models.Product).filter(models.Product.code == code).first()
@@ -16,6 +17,7 @@ def get_products(db: Session, skip: int = 0, limit: int = 100):
 
 def create_transaction(db: Session, transaction: schemas.TransactionCreate):
     db_transaction = models.Transaction(
+        datetime=datetime.utcnow(),
         emp_code=transaction.emp_code,
         store_code=transaction.store_code,
         pos_no=transaction.pos_no,

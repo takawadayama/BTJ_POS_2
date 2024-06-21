@@ -74,6 +74,7 @@ export default function Home() {
     const totalAmount = cart.reduce((total, item) => total + item.product.price * item.quantity, 0);
 
     const transaction = {
+      datetime: new Date().toISOString(),  // 現在の日時をISO形式で設定
       emp_code: 'EMP001', // 実際の値に置き換える
       store_code: 'STR001', // 実際の値に置き換える
       pos_no: 'POS001', // 実際の値に置き換える
@@ -153,7 +154,7 @@ export default function Home() {
               type="number"
               min="0"
               placeholder="数量"
-              value={quantity}
+              value={quantity.toString()}
               onChange={(e) => setQuantity(parseInt(e.target.value))}
               className="w-full px-4 py-2 border border-gray-600 rounded-md bg-gray-700 text-gray-200"
             />
