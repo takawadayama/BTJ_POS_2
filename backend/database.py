@@ -5,19 +5,24 @@ import os
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
-env_path = 'C:/Users/waday/Step4/POS_new/backend/.env'
+env_path = os.path.join(os.path.dirname(__file__), '.env')
 load_dotenv(dotenv_path=env_path)
+
 DATABASE_URL = os.getenv("DATABASE_URL")
 ssl_ca = os.getenv("SSL_CA")
 
 if DATABASE_URL is None or ssl_ca is None:
     raise ValueError("DATABASE_URL and SSL_CA must be set")
 
+# Get the path to the current directory
+current_dir = os.path.dirname(os.path.abspath(__file__))
+ssl_cert_path = os.path.join(current_dir, ssl_ca)
+
 engine = create_engine(
     DATABASE_URL,
     connect_args={
         "ssl": {
-            "ca": ssl_ca
+            "ca": ssl_cert_path
         }
     }
 )
