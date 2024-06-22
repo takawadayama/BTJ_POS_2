@@ -74,10 +74,10 @@ export default function Home() {
     const totalAmount = cart.reduce((total, item) => total + item.product.price * item.quantity, 0);
 
     const transaction = {
-      datetime: new Date().toISOString(),  // 現在の日時をISO形式で設定
-      emp_code: 'EMP001', // 実際の値に置き換える
-      store_code: 'STR001', // 実際の値に置き換える
-      pos_no: 'POS001', // 実際の値に置き換える
+      datetime: new Date().toISOString(),
+      emp_code: 'EMP001',
+      store_code: 'STR001',
+      pos_no: 'POS001',
       total_amt: totalAmount,
       details: cart.map(item => ({
         product_code: item.product.code,
