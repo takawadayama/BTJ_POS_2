@@ -1,6 +1,9 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import Quagga from 'quagga';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 interface Product {
   id: number;
@@ -22,6 +25,8 @@ export default function Home() {
   const [productName, setProductName] = useState('');
   const [productPrice, setProductPrice] = useState(0);
   const [quantity, setQuantity] = useState(0);
+  const [scanning, setScanning] = useState(false);
+  const scannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // バックエンドから商品データを取得する処理
@@ -42,13 +47,59 @@ export default function Home() {
     fetchProducts();
   }, []);
 
+  useEffect(() => {
+    if (scanning && scannerRef.current) {
+      Quagga.init({
+        inputStream: {
+          type: 'LiveStream',
+          target: scannerRef.current,
+          constraints: {
+            facingMode: 'environment' // リアカメラを使用
+          }
+        },
+        decoder: {
+          readers: ['ean_reader', 'upc_reader', 'code_128_reader'] // 必要なフォーマットを追加
+        },
+        locator: {
+          patchSize: 'large', // パッチサイズを調整
+          halfSample: false
+        },
+        locate: true,
+        numOfWorkers: 4,
+        frequency: 10
+      }, (err) => {
+        if (err) {
+          console.error(err);
+          return;
+        }
+        Quagga.start();
+      });
+
+      Quagga.onDetected((result) => {
+        const code = result.codeResult.code;
+        if (code) {
+          setProductCode(code);
+          setScanning(false);
+          Quagga.stop();
+        }
+      });
+    }
+
+    return () => {
+      if (scanning) {
+        Quagga.stop();
+      }
+    };
+  }, [scanning]);
+
   const handleLoadProduct = () => {
     const product = products.find(p => p.code === productCode);
     if (product) {
       setProductName(product.name);
       setProductPrice(product.price);
     } else {
-      setProductName('商品がマスタ未登録です');
+      alert('商品マスタ未登録です');
+      setProductName('');
       setProductPrice(0);
     }
   };
@@ -97,7 +148,7 @@ export default function Home() {
       });
 
       if (response.ok) {
-        setMessage('Purchase completed successfully!');
+        toast.success('購入ありがとうございます！');
         setCart([]);
       } else {
         setMessage('Failed to complete purchase.');
@@ -108,28 +159,50 @@ export default function Home() {
     }
   };
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('ja-JP').format(amount);
+  };
+
   const totalExcludingTax: number = cart.reduce((total, item) => total + item.product.price * item.quantity, 0);
   const totalIncludingTax: number = Math.round(totalExcludingTax * 1.1); // 10%の消費税を追加
 
+  const handleScanStart = () => {
+    setScanning(true);
+  };
+
+  const handleScanStop = () => {
+    setScanning(false);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-200 p-8">
-      <h1 className="text-4xl font-bold text-center text-gray-100 mb-8">びあPOS</h1>
+    <div className="min-h-screen bg-gray-100 text-gray-800 p-8">
+      <ToastContainer />
+      <h1 className="text-4xl font-bold text-center mb-8">びあPOS</h1>
       <div className="flex flex-col md:flex-row justify-between gap-8">
-        <div className="bg-gray-800 rounded-lg shadow-lg p-6 max-w-md mx-auto w-full">
+        <div className="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto w-full">
           <div className="mb-4">
             <input
               type="text"
               placeholder="商品コード"
               value={productCode}
               onChange={(e) => setProductCode(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-600 rounded-md bg-gray-700 text-gray-200"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md"
             />
             <button
               onClick={handleLoadProduct}
-              className="w-full mt-2 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
+              className="w-full mt-2 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"
             >
               商品コード読み込み
             </button>
+          </div>
+          <div className="mb-4">
+            <button
+              onClick={scanning ? handleScanStop : handleScanStart}
+              className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"
+            >
+              {scanning ? "カメラを停止" : "バーコードをスキャン"}
+            </button>
+            {scanning && <div ref={scannerRef} className="w-full h-64" />}
           </div>
           <div className="mb-4">
             <input
@@ -137,16 +210,16 @@ export default function Home() {
               placeholder="商品名"
               value={productName}
               readOnly
-              className="w-full px-4 py-2 border border-gray-600 rounded-md bg-gray-700 text-gray-400"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-200"
             />
           </div>
           <div className="mb-4">
             <input
               type="text"
               placeholder="単価"
-              value={productPrice ? `${productPrice}円` : ''}
+              value={productPrice ? `${formatCurrency(productPrice)}円` : ''}
               readOnly
-              className="w-full px-4 py-2 border border-gray-600 rounded-md bg-gray-700 text-gray-400"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-200"
             />
           </div>
           <div className="mb-4">
@@ -156,34 +229,33 @@ export default function Home() {
               placeholder="数量"
               value={quantity.toString()}
               onChange={(e) => setQuantity(parseInt(e.target.value))}
-              className="w-full px-4 py-2 border border-gray-600 rounded-md bg-gray-700 text-gray-200"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md"
             />
             <button
               onClick={handleAddToCart}
-              className="w-full mt-2 bg-green-600 text-white py-2 rounded-md hover:bg-green-700"
+              className="w-full mt-2 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"
             >
               カートへ追加
             </button>
           </div>
         </div>
-        <div className="bg-gray-800 rounded-lg shadow-lg p-6 max-w-md mx-auto w-full">
+        <div className="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto w-full">
           <h2 className="text-2xl font-bold text-center mb-4">購入リスト</h2>
           <ul className="mb-4">
             {cart.map(item => (
               <li key={item.product.id} className="mb-2">
-                {item.product.name} - {item.quantity} x {item.product.price} = {item.quantity * item.product.price}円
+                {item.product.name} - {item.quantity} x {formatCurrency(item.product.price)} = {formatCurrency(item.quantity * item.product.price)}円
               </li>
             ))}
           </ul>
-          <h3 className="text-xl font-bold">合計金額（税抜）: {totalExcludingTax}円</h3>
-          <h3 className="text-xl font-bold">合計金額（税込）: {totalIncludingTax}円</h3>
+          <h3 className="text-xl font-bold">合計金額（税抜）: {formatCurrency(totalExcludingTax)}円</h3>
+          <h3 className="text-xl font-bold">合計金額（税込）: {formatCurrency(totalIncludingTax)}円</h3>
           <button
             onClick={handlePurchase}
-            className="w-full mt-4 bg-red-600 text-white py-2 rounded-md hover:bg-red-700"
+            className="w-full mt-4 bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600"
           >
             購入
           </button>
-          <p className="text-center mt-4 text-red-500 bg-red-100 rounded-md p-2">{message}</p>
         </div>
       </div>
     </div>
